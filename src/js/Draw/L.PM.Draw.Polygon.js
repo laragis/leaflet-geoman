@@ -50,7 +50,9 @@ Draw.Polygon = Draw.Line.extend({
     } else {
       text = getTranslation('tooltips.finishPoly');
     }
-    this._hintMarker.setTooltipContent(text);
+
+    this._tooltipText = text // @ttungbmt
+    // this._hintMarker.setTooltipContent(text);
   },
   _finishShape() {
     // if self intersection is not allowed, do not finish the shape!

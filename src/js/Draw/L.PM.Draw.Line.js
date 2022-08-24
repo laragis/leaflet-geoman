@@ -1,4 +1,7 @@
 import kinks from '@turf/kinks';
+import distance from '@turf/distance'; // @ttungbmt
+import area from '@turf/area'; // @ttungbmt
+import map from 'lodash/map'; // @ttungbmt
 import Draw from './L.PM.Draw';
 
 import { getTranslation } from '../helpers';
@@ -65,7 +68,7 @@ Draw.Line = Draw.extend({
     this._map._container.style.cursor = 'crosshair';
 
     // create a polygon-point on click
-    this._map.on('click', this._createVertex, this);
+    this._map.on('click', this._createVertex, this);    
 
     // finish on layer event
     // #http://leafletjs.com/reference.html#interactive-layer-click
@@ -81,6 +84,9 @@ Draw.Line = Draw.extend({
         this._map.doubleClickZoom.disable();
       }
     }
+
+    this._map.on('contextmenu', this._removeLastVertex, this); // @ttungbmt
+    this._map.on('mousemove', this._showMeasurement, this); // @ttungbmt
 
     // sync hint marker with mouse cursor
     this._map.on('mousemove', this._syncHintMarker, this);
@@ -115,6 +121,8 @@ Draw.Line = Draw.extend({
     // unbind listeners
     this._map.off('click', this._createVertex, this);
     this._map.off('mousemove', this._syncHintMarker, this);
+    this._map.off('contextmenu', this._removeLastVertex, this); // @ttungbmt
+    this._map.off('mousemove', this._showMeasurement, this); // @ttungbmt
     if (this.options.finishOn && this.options.finishOn !== 'snap') {
       this._map.off(this.options.finishOn, this._finishShape, this);
     }
@@ -376,9 +384,40 @@ Draw.Line = Draw.extend({
     } else {
       text = getTranslation('tooltips.finishLine');
     }
-    this._hintMarker.setTooltipContent(text);
+
+    this._tooltipText = text // @ttungbmt
+    // this._hintMarker.setTooltipContent(text);
   },
   _change(latlngs) {
     this._fireChange(latlngs, 'Draw');
   },
+  // @ttungbmt
+  _showMeasurement(e){
+    const latlngInfo = this._layer._latlngInfo
+
+    if(!latlngInfo) return null;
+
+    const lastPoint = L.marker(latlngInfo.slice(-1).shift()?.latlng);
+    const movingPoint = L.marker(e.latlng);
+
+    const numberFormat = (number) => new Intl.NumberFormat('en-EN').format(number)
+
+    let segmentLength = distance(lastPoint.toGeoJSON(15), movingPoint.toGeoJSON(15), {units: 'meters'});
+    const segmentLengthText = (segmentLength > 1000) ? (segmentLength/1000).toFixed(2) + ' km' : segmentLength.toFixed(0) + ' m';
+    const positionMarkerText = [e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6)].join(', ');
+
+    let tooltipContent = this._tooltipText
+
+    if(this._shape === 'Polygon' && latlngInfo.length > 1) {
+      const polygon = L.polygon(map(latlngInfo, 'latlng').concat(e.latlng));
+      const areaNumber = area(polygon.toGeoJSON(15)).toFixed(0);
+
+      tooltipContent += `</br><b>Area:</b> ${numberFormat(areaNumber)} m<sup>2</sup>`;
+    }
+
+    tooltipContent += `</br><b>Segment length:</b> ${segmentLengthText}`;
+    tooltipContent += `</br><b>Position Marker:</b> ${positionMarkerText}`;
+
+    this._hintMarker.setTooltipContent(tooltipContent);
+  }
 });

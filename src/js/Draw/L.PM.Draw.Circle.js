@@ -80,6 +80,8 @@ Draw.Circle = Draw.extend({
     // sync hint marker with mouse cursor
     this._map.on('mousemove', this._syncHintMarker, this);
 
+    this._map.on('mousemove', this._showMeasurement, this); // @ttungbmt
+
     // toggle the draw button of the Toolbar in case drawing mode got enabled without the button
     this._map.pm.Toolbar.toggleButton(this.toolbarButtonName, true);
 
@@ -108,6 +110,7 @@ Draw.Circle = Draw.extend({
     this._map.off('click', this._finishShape, this);
     this._map.off('click', this._placeCenterMarker, this);
     this._map.off('mousemove', this._syncHintMarker, this);
+    this._map.off('mousemove', this._showMeasurement, this); // @ttungbmt
 
     // remove helping layers
     this._map.removeLayer(this._layerGroup);
@@ -337,4 +340,21 @@ Draw.Circle = Draw.extend({
     // calculate the new latlng of marker if the snapped latlng radius is out of min/max
     this._hintMarker.setLatLng(this._getNewDestinationOfHintMarker());
   },
+  // @ttungbmt
+  _showMeasurement(e){
+    if(this._layer.getRadius() <= 0) return null;
+
+    const positionMarker = this._layer.getLatLng();
+    const positionMarkerText = [positionMarker.lat.toFixed(6), positionMarker.lng.toFixed(6)].join(', ');
+
+    const radius = this._layer.getRadius();
+    const radiusText = (radius > 1000) ? (radius/1000).toFixed(2) + ' km' : radius.toFixed(0) + ' m';
+
+    let tooltipContent = getTranslation('tooltips.finishCircle');
+
+    tooltipContent += `</br><b>Center:</b> ${positionMarkerText}`;
+    tooltipContent += `</br><b>Radius:</b> ${radiusText}`;
+
+    this._hintMarker.setTooltipContent(tooltipContent);
+  }
 });

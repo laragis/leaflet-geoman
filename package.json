@@ -21,7 +21,9 @@
   "main": "dist/leaflet-geoman.min.js",
   "types": "dist/leaflet-geoman.d.ts",
   "dependencies": {
+    "@turf/area": "^6.5.0",
     "@turf/boolean-contains": "^6.5.0",
+    "@turf/distance": "^6.5.0",
     "@turf/kinks": "^6.5.0",
     "@turf/line-intersect": "^6.5.0",
     "@turf/line-split": "^6.5.0",
