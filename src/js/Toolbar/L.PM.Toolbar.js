@@ -362,7 +362,7 @@ const Toolbar = L.Class.extend({
       disableOtherButtons: true,
       position: this.options.position,
       tool: 'edit',
-      actions: ['finishMode'],
+      actions: ['finishMode', 'clearAll'],
     };
 
     const rotateButton = {

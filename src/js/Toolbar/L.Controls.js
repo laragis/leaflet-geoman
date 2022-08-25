@@ -144,6 +144,14 @@ const PMButton = L.Control.extend({
           this._map.pm.Draw[button.jsClass]._finishShape(e);
         },
       },
+      // @ttungbmt
+      clearAll: {
+        text: getTranslation('actions.clearAll') || 'Clear All',
+        onClick(e) {
+          this._map.pm.getGeomanLayers().map(layer => this._map.removeLayer(layer))
+          this._triggerClick();
+        },
+      }
     };
 
     activeActions.forEach((_action) => {
