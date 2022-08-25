@@ -14,7 +14,8 @@
   "actions": {
     "finish": "Kết thúc",
     "cancel": "Hủy",
-    "removeLastVertex": "Xóa điểm cuối"
+    "removeLastVertex": "Xóa điểm cuối",
+    "clearAll": "Xóa tất cả"
   },
   "buttonTitles": {
     "drawMarkerButton": "Vẽ điểm đánh dấu",
@@ -30,7 +31,7 @@
     "snappingButton": "Bắt dính điểm đánh dấu đã kéo vào các dữ liệu và đỉnh khác",
     "pinningButton": "Ghim các đỉnh được chia sẻ với nhau",
     "rotateButton": "Xoay dữ liệu",
-    "drawTe,xtButton": "Vẽ chữ"
+    "drawTextButton": "Vẽ chữ"
   },
   "measurementTooltips": {
     "area": "Diện tích",
