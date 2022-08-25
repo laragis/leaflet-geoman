@@ -9,7 +9,7 @@
     "startCircle": "Click để đặt vị trí tâm hình tròn",
     "finishCircle": "Click để kết thúc hình tròn",
     "placeCircleMarker": "Click để đặt điểm dạng hình tròn",
-    "placeText": "Click để đặt chữ"
+    "placeText": "Click để đặt chữ" 
   },
   "actions": {
     "finish": "Kết thúc",
@@ -30,6 +30,14 @@
     "snappingButton": "Bắt dính điểm đánh dấu đã kéo vào các dữ liệu và đỉnh khác",
     "pinningButton": "Ghim các đỉnh được chia sẻ với nhau",
     "rotateButton": "Xoay dữ liệu",
-    "drawTextButton": "Vẽ chữ"
+    "drawTe,xtButton": "Vẽ chữ"
+  },
+  "measurementTooltips": {
+    "area": "Diện tích",
+    "totalLength": "Tổng chiều dài",
+    "segmentLength": "Chiều dài đoạn thẳng",
+    "cursorPosition": "Vị trí con trỏ",
+    "centerPostision": "Vị trí tâm",
+    "radius": "Bán kính"
   }
 }

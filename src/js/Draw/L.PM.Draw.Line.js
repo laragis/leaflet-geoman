@@ -1,8 +1,11 @@
 import kinks from '@turf/kinks';
-import distance from '@turf/distance'; // @ttungbmt
-import area from '@turf/area'; // @ttungbmt
-import map from 'lodash/map'; // @ttungbmt
 import Draw from './L.PM.Draw';
+// @ttungbmt
+import distance from '@turf/distance';
+import area from '@turf/area'; 
+import map from 'lodash/map'; 
+import sum from 'lodash/sum'; 
+import transform from 'lodash/transform';
 
 import { getTranslation } from '../helpers';
 
@@ -393,30 +396,38 @@ Draw.Line = Draw.extend({
   },
   // @ttungbmt
   _showMeasurement(e){
-    const latlngInfo = this._layer._latlngInfo
+    const latlngInfo = this._layer._latlngInfo;
+    const cursorLatlngs = map(latlngInfo, 'latlng').concat(e.latlng)
 
     if(!latlngInfo) return null;
 
     const lastPoint = L.marker(latlngInfo.slice(-1).shift()?.latlng);
     const movingPoint = L.marker(e.latlng);
 
-    const numberFormat = (number) => new Intl.NumberFormat('en-EN').format(number)
+    const numberFormat = (number) => new Intl.NumberFormat('en-EN').format(number);
+    const lengthFormat = (number) => (number > 1000) ? (number/1000).toFixed(2) + ' km' : number.toFixed(0) + ' m';
 
     let segmentLength = distance(lastPoint.toGeoJSON(15), movingPoint.toGeoJSON(15), {units: 'meters'});
-    const segmentLengthText = (segmentLength > 1000) ? (segmentLength/1000).toFixed(2) + ' km' : segmentLength.toFixed(0) + ' m';
+    let totalLength = sum(transform(cursorLatlngs, (result, value, key) => {
+      if((cursorLatlngs.length - 1) === key) return;
+      result[key] = distance(L.marker(value).toGeoJSON(15), L.marker(cursorLatlngs[key+1]).toGeoJSON(15), {units: 'meters'})
+    }, []))
+
+    const totalLengthText = lengthFormat(totalLength);
+    const segmentLengthText = lengthFormat(segmentLength);
     const positionMarkerText = [e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6)].join(', ');
 
     let tooltipContent = this._tooltipText
 
     if(this._shape === 'Polygon' && latlngInfo.length > 1) {
-      const polygon = L.polygon(map(latlngInfo, 'latlng').concat(e.latlng));
+      const polygon = L.polygon(cursorLatlngs);
       const areaNumber = area(polygon.toGeoJSON(15)).toFixed(0);
 
-      tooltipContent += `</br><b>Area:</b> ${numberFormat(areaNumber)} m<sup>2</sup>`;
+      tooltipContent += `</br><b>${getTranslation('measurementTooltips.area') || 'Area'}:</b> ${numberFormat(areaNumber)} m<sup>2</sup>`;
     }
-
-    tooltipContent += `</br><b>Segment length:</b> ${segmentLengthText}`;
-    tooltipContent += `</br><b>Position Marker:</b> ${positionMarkerText}`;
+    tooltipContent += `</br><b>${getTranslation('measurementTooltips.totalLength') || 'Total length'}:</b> ${totalLengthText}`;
+    tooltipContent += `</br><b>${getTranslation('measurementTooltips.segmentLength') || 'Segment length'}:</b> ${segmentLengthText}`;
+    tooltipContent += `</br><b>${getTranslation('measurementTooltips.cursorPosition') || 'Cursor position'}:</b> ${positionMarkerText}`;
 
     this._hintMarker.setTooltipContent(tooltipContent);
   }
