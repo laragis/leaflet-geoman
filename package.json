@@ -63,7 +63,6 @@
     "test": "cypress run",
     "cypress": "cypress open",
     "build": "webpack --config=webpack.build.js",
-    "prepare": "npm run build",
     "eslint-check": "eslint --print-config . | eslint-config-prettier-check",
     "eslint": "eslint src/ --fix",
     "prettier": "prettier --write '{src,cypress}/**/*.{js,css}'",
