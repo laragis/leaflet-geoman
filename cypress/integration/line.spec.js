@@ -117,6 +117,8 @@ describe('Draw & Edit Line', () => {
       .closest('.button-container')
       .should('have.class', 'active');
 
+    cy.get(mapSelector).should('have.class', 'geoman-draw-cursor');
+
     // draw a line
     cy.get(mapSelector)
       .click(150, 250)
@@ -124,6 +126,8 @@ describe('Draw & Edit Line', () => {
       .click(250, 50)
       .click(250, 250)
       .click(250, 250);
+
+    cy.get(mapSelector).should('not.have.class', 'geoman-draw-cursor');
 
     // button should be disabled after successful draw
     cy.toolbarButton('polyline')
@@ -297,5 +301,61 @@ describe('Draw & Edit Line', () => {
       layer.remove();
     });
     cy.hasLayers(2);
+  });
+
+  it('change color of line while drawing', () => {
+    cy.toolbarButton('polyline')
+      .click()
+      .closest('.button-container')
+      .should('have.class', 'active');
+
+    cy.get(mapSelector).click(200, 200);
+    cy.get(mapSelector).click(100, 230);
+    cy.get(mapSelector).trigger('mousemove', 300, 300);
+
+    cy.window().then(({ map }) => {
+      const style = {
+        color: 'red',
+      };
+      map.pm.setGlobalOptions({ templineStyle: style, hintlineStyle: style });
+
+      const layer = map.pm.Draw.Line._layer;
+      const hintLine = map.pm.Draw.Line._hintline;
+      expect(layer.options.color).to.eql('red');
+      expect(hintLine.options.color).to.eql('red');
+    });
+  });
+
+  it('remove vertex marker from MarkerLimit Cache', () => {
+    cy.toolbarButton('polyline').click();
+
+    cy.get(mapSelector)
+      .click(120, 150)
+      .click(120, 100)
+      .click(300, 100)
+      .click(300, 200)
+      .click(120, 150);
+
+    cy.toolbarButton('edit').click();
+
+    cy.hasVertexMarkers(4);
+    cy.hasMiddleMarkers(3);
+
+    // rightclick on a vertex-marker to delete it
+    cy.get('.marker-icon:not(.marker-icon-middle)')
+      .eq(2)
+      .trigger('contextmenu');
+
+    cy.hasVertexMarkers(3);
+    cy.hasMiddleMarkers(2);
+
+    cy.wait(20);
+
+    cy.window().then(({ map }) => {
+      map.panBy([40, 40], { animate: false });
+    });
+
+    cy.hasVertexMarkers(3);
+    cy.hasMiddleMarkers(2);
   });
 });

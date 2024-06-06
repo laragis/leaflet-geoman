@@ -4,12 +4,16 @@ describe('Draw & Edit Poly', () => {
   it('drages shared vertices when pinned', () => {
     cy.toolbarButton('polygon').click();
 
+    cy.get(mapSelector).should('have.class', 'geoman-draw-cursor');
+
     cy.get(mapSelector)
       .click(120, 150)
       .click(120, 100)
       .click(300, 100)
       .click(300, 200)
       .click(120, 150);
+
+    cy.get(mapSelector).should('not.have.class', 'geoman-draw-cursor');
 
     cy.toolbarButton('marker').click();
 
@@ -248,16 +252,21 @@ describe('Draw & Edit Poly', () => {
   });
 
   it('prevents self intersections', () => {
+    let intersectEventCalled = false;
     cy.window().then(({ map }) => {
       map.pm.enableDraw('Polygon', {
         allowSelfIntersection: false,
       });
 
-      Cypress.$(map).on('pm:create', ({ originalEvent: event }) => {
+      map.on('pm:create', (event) => {
         const poly = event.layer;
         poly.pm.enable({
           allowSelfIntersection: false,
         });
+      });
+
+      map.on('pm:intersect', () => {
+        intersectEventCalled = true;
       });
     });
 
@@ -272,6 +281,10 @@ describe('Draw & Edit Poly', () => {
     cy.toolbarButton('edit').click();
 
     cy.hasVertexMarkers(4);
+
+    cy.window().then(() => {
+      expect(intersectEventCalled).to.eql(true);
+    });
   });
 
   it('doesnt allow duplicate points in polygon', () => {
@@ -703,9 +716,8 @@ describe('Draw & Edit Poly', () => {
           onStop() {
             expect(poly.pm.hasSelfIntersection()).to.equal(true);
 
-            const toucherSelfIntersectionFalse = handSelfIntersectionFalse.growFinger(
-              'mouse'
-            );
+            const toucherSelfIntersectionFalse =
+              handSelfIntersectionFalse.growFinger('mouse');
             toucherSelfIntersectionFalse
               .wait(100)
               .moveTo(504, 337, 100)
@@ -731,9 +743,8 @@ describe('Draw & Edit Poly', () => {
           allowSelfIntersectionEdit: true,
         });
 
-        const toucherSelfIntersectionTrue = handSelfIntersectionTrue.growFinger(
-          'mouse'
-        );
+        const toucherSelfIntersectionTrue =
+          handSelfIntersectionTrue.growFinger('mouse');
         toucherSelfIntersectionTrue
           .wait(100)
           .moveTo(294, 114, 100)
@@ -900,6 +911,13 @@ describe('Draw & Edit Poly', () => {
     cy.window().then(({ map }) => {
       expect(2).to.eq(map.pm.getGeomanDrawLayers().length);
     });
+
+    cy.toolbarButton('delete').click();
+    cy.get(mapSelector).click(160, 50);
+
+    cy.window().then(({ map }) => {
+      expect(1).to.eq(map.pm.getGeomanDrawLayers().length);
+    });
   });
 
   it('requireSnapToFinish', () => {
@@ -1004,7 +1022,7 @@ describe('Draw & Edit Poly', () => {
 
     let layer;
     cy.window().then(({ map }) => {
-      layer = map.pm.getGeomanDrawLayers()[0];
+      [layer] = map.pm.getGeomanDrawLayers();
       map.pm.setGlobalOptions({ allowCutting: false });
     });
 
@@ -1048,7 +1066,7 @@ describe('Draw & Edit Poly', () => {
     let layer;
     cy.window().then(({ map }) => {
       const cutlayer = map.pm.getGeomanDrawLayers()[0];
-      layer = map.pm.getGeomanDrawLayers()[1];
+      [, layer] = map.pm.getGeomanDrawLayers();
       map.pm.enableDraw('Cut', { layersToCut: [cutlayer] });
     });
 
@@ -1144,5 +1162,169 @@ describe('Draw & Edit Poly', () => {
     // Remove Vertex
     cy.get(mapSelector).rightclick(205, 50);
     cy.hasVertexMarkers(3);
+  });
+
+  it('cleans coords if last vertex of MultiPolygon is removed', () => {
+    cy.toolbarButton('polygon').click();
+    cy.get(mapSelector)
+      .click(90, 250)
+      .click(100, 50)
+      .click(540, 250)
+      .click(150, 250)
+      .click(90, 250);
+
+    cy.toolbarButton('cut').click();
+    cy.get(mapSelector)
+      .click(200, 70)
+      .click(250, 70)
+      .click(250, 300)
+      .click(200, 300)
+      .click(200, 70);
+
+    cy.toolbarButton('edit').click();
+
+    cy.get('.marker-icon:not(.marker-icon-middle)').each(($el, index) => {
+      if (index < 2) {
+        // remove first two markers
+        cy.wrap($el).trigger('contextmenu');
+      }
+    });
+
+    expect(() => {
+      cy.toolbarButton('edit').click();
+    }).to.not.throw();
+  });
+
+  it('remove vertex & layer by right-click', () => {
+    cy.toolbarButton('polygon').click();
+    cy.get(mapSelector)
+      .click(150, 250)
+      .click(160, 50)
+      .click(250, 50)
+      .click(150, 250);
+
+    cy.toolbarButton('edit').click();
+    cy.hasDrawnLayers(1);
+
+    // Add Vertex
+    cy.get(mapSelector).click(205, 50);
+    cy.hasVertexMarkers(4);
+
+    // Remove Vertex
+    cy.get(mapSelector).rightclick(205, 50);
+    cy.hasVertexMarkers(3);
+
+    cy.get(mapSelector).rightclick(150, 250);
+    cy.hasDrawnLayers(0);
+  });
+
+  it('re-render marker-handlers if hole is removed by right-click', () => {
+    cy.toolbarButton('polygon').click();
+    cy.get(mapSelector)
+      .click(150, 250)
+      .click(150, 50)
+      .click(650, 50)
+      .click(650, 250)
+      .click(150, 250);
+
+    cy.toolbarButton('cut').click();
+    cy.get(mapSelector)
+      .click(250, 200)
+      .click(250, 100)
+      .click(450, 200)
+      .click(250, 200);
+
+    cy.toolbarButton('edit').click();
+    cy.hasVertexMarkers(7);
+
+    // Remove hole
+    cy.get(mapSelector).rightclick(250, 200);
+    cy.hasVertexMarkers(4);
+  });
+
+  it('show correct shape for Polygon while drawing', () => {
+    cy.toolbarButton('polygon')
+      .click()
+      .closest('.button-container')
+      .should('have.class', 'active');
+
+    cy.get(mapSelector).click(150, 150).click(450, 150).click(450, 400);
+
+    cy.window().then(({ map }) => {
+      const polygon = map.pm.Draw.Polygon._layer;
+      expect(polygon.pm.getShape()).to.equal('Polygon');
+    });
+  });
+
+  it('change color of Polygon while drawing', () => {
+    cy.toolbarButton('polygon')
+      .click()
+      .closest('.button-container')
+      .should('have.class', 'active');
+
+    cy.get(mapSelector).click(220, 220);
+    cy.get(mapSelector).click(100, 230);
+    cy.get(mapSelector).trigger('mousemove', 300, 300);
+
+    cy.window().then(({ map }) => {
+      const style = {
+        color: 'red',
+      };
+      map.pm.setGlobalOptions({ templineStyle: style, hintlineStyle: style });
+
+      const layer = map.pm.Draw.Polygon._layer;
+      const hintLine = map.pm.Draw.Polygon._hintline;
+      expect(layer.options.color).to.eql('red');
+      expect(hintLine.options.color).to.eql('red');
+    });
+  });
+
+  it('snap to start marker instead of to the layer below', () => {
+    cy.window().then(({ map, L }) => {
+      // it was not possible to create this test with creating the polygon by clicking
+      const polygon = L.polygon([
+        [
+          [20.53507732696281, 71.98242187500001],
+          [19.87005983797396, 71.97143554687501],
+          [19.782211275967995, 73.35021972656251],
+          [20.55565240377338, 73.48754882812501],
+          [20.53507732696281, 71.98242187500001],
+        ],
+      ]);
+      polygon.addTo(map);
+      map.fitBounds(polygon.getBounds(), { animate: false });
+      map.setZoom(8, { animate: false });
+
+      map.pm.enableDraw('Polygon');
+
+      map.pm.Draw.Polygon._hintMarker.setLatLng([
+        20.53837097209846, 72.22334801861803,
+      ]);
+      map.pm.Draw.Polygon._createVertex({
+        latlng: [20.53837097209846, 72.22334801861803],
+      });
+
+      map.pm.Draw.Polygon._hintMarker.setLatLng([
+        20.21581109239457, 72.13073730468751,
+      ]);
+      map.pm.Draw.Polygon._createVertex({
+        latlng: [20.21581109239457, 72.13073730468751],
+      });
+
+      map.pm.Draw.Polygon._hintMarker.setLatLng([
+        20.205501205844214, 72.77893066406251,
+      ]);
+      map.pm.Draw.Polygon._createVertex({
+        latlng: [20.205501205844214, 72.77893066406251],
+      });
+    });
+
+    cy.get(mapSelector).trigger('mousemove', 413, 180);
+
+    cy.window().then(({ map }) => {
+      const hintMarker = map.pm.Draw.Polygon._hintMarker;
+      expect(hintMarker.getLatLng().lat).to.eq(20.53837097209846);
+      expect(hintMarker.getLatLng().lng).to.eq(72.22334801861803);
+    });
   });
 });

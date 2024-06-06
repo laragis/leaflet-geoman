@@ -314,9 +314,14 @@ const EventMixin = {
     );
   },
   // Fired when a Line / Polygon has self intersection
-  _fireIntersect(intersection, source = 'Edit', customPayload = {}) {
+  _fireIntersect(
+    intersection,
+    fireLayer = this._layer,
+    source = 'Edit',
+    customPayload = {}
+  ) {
     this.__fire(
-      this._layer,
+      fireLayer,
       'pm:intersect',
       {
         layer: this._layer,
@@ -366,6 +371,33 @@ const EventMixin = {
       {
         layer: this._layer,
         text,
+        shape: this.getShape(),
+      },
+      source,
+      customPayload
+    );
+  },
+
+  // Fired when text layer focused
+  _fireTextFocus(source = 'Edit', customPayload = {}) {
+    this.__fire(
+      this._layer,
+      'pm:textfocus',
+      {
+        layer: this._layer,
+        shape: this.getShape(),
+      },
+      source,
+      customPayload
+    );
+  },
+  // Fired when text layer blurred
+  _fireTextBlur(source = 'Edit', customPayload = {}) {
+    this.__fire(
+      this._layer,
+      'pm:textblur',
+      {
+        layer: this._layer,
         shape: this.getShape(),
       },
       source,

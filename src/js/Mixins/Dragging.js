@@ -135,11 +135,11 @@ const DragMixin = {
   // We need to simulate a mousedown event on the layer object. We can't just use layer.on('mousedown') because on touch devices the event is not fired if user presses on the layer and then drag it.
   // With checking on touchstart and mousedown on the DOM element we can listen on the needed events
   _simulateMouseDownEvent(e) {
+    const first = e.touches ? e.touches[0] : e;
     const evt = {
-      originalEvent: e,
+      originalEvent: first,
       target: this._layer,
     };
-    const first = e.touches ? e.touches[0] : e;
     // we expect in the function to get the clicked latlng / point
     evt.containerPoint = this._map.mouseEventToContainerPoint(first);
     evt.latlng = this._map.containerPointToLatLng(evt.containerPoint);
@@ -148,11 +148,11 @@ const DragMixin = {
     return false;
   },
   _simulateMouseMoveEvent(e) {
+    const first = e.touches ? e.touches[0] : e;
     const evt = {
-      originalEvent: e,
+      originalEvent: first,
       target: this._layer,
     };
-    const first = e.touches ? e.touches[0] : e;
     // we expect in the function to get the clicked latlng / point
     evt.containerPoint = this._map.mouseEventToContainerPoint(first);
     evt.latlng = this._map.containerPointToLatLng(evt.containerPoint);
@@ -161,8 +161,9 @@ const DragMixin = {
     return false;
   },
   _simulateMouseUpEvent(e) {
+    const first = e.touches ? e.touches[0] : e;
     const evt = {
-      originalEvent: e,
+      originalEvent: first,
       target: this._layer,
     };
     if (e.type.indexOf('touch') === -1) {
@@ -194,15 +195,17 @@ const DragMixin = {
     }
 
     // we need to disable snapping for CircleMarker because they are snapping because of the check in onLayerDrag -> if(_snapped)
-    if (
-      this._layer instanceof L.CircleMarker &&
-      !(this._layer instanceof L.Circle)
-    ) {
+    if (this._layer instanceof L.CircleMarker) {
+      let _editableOption = 'resizeableCircleMarker';
+      if (this._layer instanceof L.Circle) {
+        _editableOption = 'resizableCircle';
+      }
+
       if (this.options.snappable && !fromLayerSync && !layersToSyncFound) {
-        if (!this._layer.pm.options.editable) {
+        if (!this._layer.pm.options[_editableOption]) {
           this._initSnappableMarkersDrag();
         }
-      } else if (this._layer.pm.options.editable) {
+      } else if (this._layer.pm.options[_editableOption]) {
         this._layer.pm._disableSnapping();
       } else {
         this._layer.pm._disableSnappingDrag();
@@ -328,6 +331,7 @@ const DragMixin = {
 
       // fire edit
       this._fireEdit();
+      this._layerEdited = true;
     }, 10);
 
     return true;
@@ -364,8 +368,10 @@ const DragMixin = {
       });
 
     if (
-      this._layer instanceof L.Circle ||
-      (this._layer instanceof L.CircleMarker && this._layer.options.editable)
+      (this._layer instanceof L.Circle &&
+        this._layer.options.resizableCircle) ||
+      (this._layer instanceof L.CircleMarker &&
+        this._layer.options.resizeableCircleMarker)
     ) {
       // create the new coordinates array
       const newCoords = moveCoords([this._layer.getLatLng()]);

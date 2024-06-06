@@ -27,15 +27,19 @@ const Draw = L.Class.extend({
     maxRadiusCircle: null,
     minRadiusCircleMarker: null,
     maxRadiusCircleMarker: null,
-    editable: false,
+    resizeableCircleMarker: false,
+    resizableCircle: true,
     markerEditable: true,
     continueDrawing: false,
     snapSegment: true,
     requireSnapToFinish: false,
+    rectangleAngle: 0,
   },
   setOptions(options) {
     L.Util.setOptions(this, options);
+    this.setStyle(this.options);
   },
+  setStyle() {},
   getOptions() {
     return this.options;
   },
@@ -66,6 +70,7 @@ const Draw = L.Class.extend({
       this[shape] = new L.PM.Draw[shape](this._map);
     });
 
+    // TODO: Remove this with the next major release
     this.Marker.setOptions({ continueDrawing: true });
     this.CircleMarker.setOptions({ continueDrawing: true });
   },
@@ -131,7 +136,22 @@ const Draw = L.Class.extend({
       this._fireGlobalDrawModeToggled();
     }
 
-    const layers = L.PM.Utils.findLayers(this._map);
+    const layers = [];
+    this._map.eachLayer((layer) => {
+      if (
+        layer instanceof L.Polyline ||
+        layer instanceof L.Marker ||
+        layer instanceof L.Circle ||
+        layer instanceof L.CircleMarker ||
+        layer instanceof L.ImageOverlay
+      ) {
+        // filter out everything that's leaflet-geoman specific temporary stuff
+        if (!layer._pmTempLayer) {
+          layers.push(layer);
+        }
+      }
+    });
+
     if (this._enabled) {
       layers.forEach((layer) => {
         L.PM.Utils.disablePopup(layer);

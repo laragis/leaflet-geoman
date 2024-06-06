@@ -2,7 +2,7 @@ import kinks from '@turf/kinks';
 import lineIntersect from '@turf/line-intersect';
 import get from 'lodash/get';
 import Edit from './L.PM.Edit';
-import { isEmptyDeep, removeEmptyCoordRings } from '../helpers';
+import { copyLatLngs, hasValues, removeEmptyCoordRings } from '../helpers';
 
 import MarkerLimits from '../Mixins/MarkerLimits';
 
@@ -106,11 +106,6 @@ Edit.Line = Edit.extend({
       : this._layer._renderer._container;
     L.DomUtil.removeClass(el, 'leaflet-pm-draggable');
 
-    // remove invalid class if layer has self intersection
-    if (this.hasSelfIntersection()) {
-      L.DomUtil.removeClass(el, 'leaflet-pm-invalid');
-    }
-
     if (this._layerEdited) {
       this._fireUpdate();
     }
@@ -145,7 +140,7 @@ Edit.Line = Edit.extend({
     }
 
     // add markerGroup to map, markerGroup includes regular and middle markers
-    this._markerGroup = new L.LayerGroup();
+    this._markerGroup = new L.FeatureGroup();
     this._markerGroup._pmTempLayer = true;
 
     // handle coord-rings (outer, inner, etc)
@@ -355,9 +350,9 @@ Edit.Line = Edit.extend({
 
   _handleSelfIntersectionOnVertexRemoval() {
     // check for selfintersection again (mainly to reset the style)
-    this._handleLayerStyle(true);
+    const selfIntersection = this._handleLayerStyle(true);
 
-    if (this.hasSelfIntersection()) {
+    if (selfIntersection) {
       // reset coordinates
       this._layer.setLatLngs(this._coordsBeforeEdit);
       this._coordsBeforeEdit = null;
@@ -370,7 +365,16 @@ Edit.Line = Edit.extend({
   _handleLayerStyle(flash) {
     const layer = this._layer;
 
-    if (this.hasSelfIntersection()) {
+    let selfIntersection;
+    let intersection;
+    if (this.options.allowSelfIntersection) {
+      selfIntersection = false;
+    } else {
+      intersection = kinks(this._layer.toGeoJSON(15));
+      selfIntersection = intersection.features.length > 0;
+    }
+
+    if (selfIntersection) {
       if (
         !this.options.allowSelfIntersection &&
         this.options.allowSelfIntersectionEdit
@@ -379,7 +383,7 @@ Edit.Line = Edit.extend({
       }
 
       if (this.isRed) {
-        return;
+        return selfIntersection;
       }
 
       // if it does self-intersect, mark or flash it red
@@ -390,9 +394,8 @@ Edit.Line = Edit.extend({
         this.isRed = true;
       }
 
-      // TODO: call kinks only once (hasSelfIntersection)
       // fire intersect event
-      this._fireIntersect(kinks(this._layer.toGeoJSON(15)));
+      this._fireIntersect(intersection);
     } else {
       // if not, reset the style to the default color
       layer.setStyle({ color: this.cachedColor });
@@ -404,6 +407,7 @@ Edit.Line = Edit.extend({
         this._updateDisabledMarkerStyle(this._markers, false);
       }
     }
+    return selfIntersection;
   },
   _flashLayer() {
     if (!this.cachedColor) {
@@ -442,8 +446,10 @@ Edit.Line = Edit.extend({
     // if self intersection isn't allowed, save the coords upon dragstart
     // in case we need to reset the layer
     if (!this.options.allowSelfIntersection) {
-      const c = this._layer.getLatLngs();
-      this._coordsBeforeEdit = JSON.parse(JSON.stringify(c));
+      this._coordsBeforeEdit = copyLatLngs(
+        this._layer,
+        this._layer.getLatLngs()
+      );
     }
 
     // coords of the layer
@@ -495,18 +501,21 @@ Edit.Line = Edit.extend({
     if (coordsRing.length <= 1) {
       coordsRing.splice(0, coordsRing.length);
 
+      // Clean up MultiPolygon
+      if (parentPath.length > 1 && indexPath.length > 1) {
+        coords = removeEmptyCoordRings(coords);
+      }
+
       // set new coords
       this._layer.setLatLngs(coords);
 
       // re-enable editing so unnecessary markers are removed
-      // TODO: kind of an ugly workaround maybe do it better?
-      this.disable();
-      this.enable(this.options);
+      this._initMarkers();
       layerRemoved = true;
     }
 
     // if no coords are left, remove the layer
-    if (isEmptyDeep(coords)) {
+    if (!hasValues(coords)) {
       this._layer.remove();
     }
 
@@ -526,13 +535,16 @@ Edit.Line = Edit.extend({
       // remove the marker and the middlemarkers next to it from the map
       if (marker._middleMarkerPrev) {
         this._markerGroup.removeLayer(marker._middleMarkerPrev);
+        this._removeFromCache(marker._middleMarkerPrev);
       }
       if (marker._middleMarkerNext) {
         this._markerGroup.removeLayer(marker._middleMarkerNext);
+        this._removeFromCache(marker._middleMarkerNext);
       }
 
       // remove the marker from the map
       this._markerGroup.removeLayer(marker);
+      this._removeFromCache(marker);
 
       if (markerArr) {
         let rightMarkerIndex;
@@ -663,7 +675,10 @@ Edit.Line = Edit.extend({
     // if self intersection isn't allowed, save the coords upon dragstart
     // in case we need to reset the layer
     if (!this.options.allowSelfIntersection) {
-      this._coordsBeforeEdit = this._layer.getLatLngs();
+      this._coordsBeforeEdit = copyLatLngs(
+        this._layer,
+        this._layer.getLatLngs()
+      );
     }
 
     if (

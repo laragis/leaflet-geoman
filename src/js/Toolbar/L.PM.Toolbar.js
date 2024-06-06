@@ -34,6 +34,15 @@ const Toolbar = L.Class.extend({
   },
   customButtons: [],
   initialize(map) {
+    // For some reason there is an reference between multiple maps instances
+    this.customButtons = [];
+    this.options.positions = {
+      draw: '',
+      edit: '',
+      options: '',
+      custom: '',
+    };
+
     this.init(map);
   },
   reinit() {
@@ -151,7 +160,7 @@ const Toolbar = L.Class.extend({
   },
   _addButton(name, button) {
     this.buttons[name] = button;
-    this.options[name] = this.options[name] || false;
+    this.options[name] = !!this.options[name] || false;
 
     return this.buttons[name];
   },
@@ -161,18 +170,14 @@ const Toolbar = L.Class.extend({
     // we can't have two active modes because of possible event conflicts
     // so, we trigger a click on all currently active (toggled) buttons
 
-    // the options toolbar should not be disabled during the different modes
-    // TODO: probably need to abstract this a bit so different options are automatically
-    // disabled for different modes, like pinning for circles
-    const exceptOptionButtons = ['snappingOption'];
-
     for (const name in this.buttons) {
+      const button = this.buttons[name];
       if (
-        !exceptOptionButtons.includes(name) &&
-        this.buttons[name] !== exceptThisButton &&
-        this.buttons[name].toggled()
+        button._button.disableByOtherButtons &&
+        button !== exceptThisButton &&
+        button.toggled()
       ) {
-        this.buttons[name]._triggerClick();
+        button._triggerClick();
       }
     }
   },
@@ -548,7 +553,8 @@ const Toolbar = L.Class.extend({
       afterClick: options.afterClick,
       doToggle: options.toggle,
       toggleStatus: false,
-      disableOtherButtons: true,
+      disableOtherButtons: options.disableOtherButtons ?? true,
+      disableByOtherButtons: options.disableByOtherButtons ?? true,
       cssToggle: options.toggle,
       position: this.options.position,
       actions: options.actions || [],
@@ -566,7 +572,28 @@ const Toolbar = L.Class.extend({
     this.changeControlOrder();
     return control;
   },
-
+  controlExists(name) {
+    return Boolean(this.getButton(name));
+  },
+  getButton(name) {
+    return this.getButtons()[name];
+  },
+  getButtonsInBlock(name) {
+    const buttonsInBlock = {};
+    if (name) {
+      for (const buttonName in this.getButtons()) {
+        const button = this.getButtons()[buttonName];
+        // draw controls doesn't have a block
+        if (
+          button._button.tool === name ||
+          (name === 'draw' && !button._button.tool)
+        ) {
+          buttonsInBlock[buttonName] = button;
+        }
+      }
+    }
+    return buttonsInBlock;
+  },
   changeControlOrder(order = []) {
     const shapeMapping = this._shapeMapping();
 

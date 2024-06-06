@@ -1,6 +1,7 @@
 // Corner detection based on Leaflet Draw's Edit.Rectangle.js Class:
 // https://github.com/Leaflet/Leaflet.draw/blob/master/src/edit/handler/Edit.Rectangle.js
 import Edit from './L.PM.Edit';
+import { calcAngle } from '../helpers';
 
 Edit.Rectangle = Edit.Polygon.extend({
   _shape: 'Rectangle',
@@ -15,7 +16,7 @@ Edit.Rectangle = Edit.Polygon.extend({
     }
 
     // add markerGroup to map, markerGroup includes regular and middle markers
-    this._markerGroup = new L.LayerGroup();
+    this._markerGroup = new L.FeatureGroup();
     this._markerGroup._pmTempLayer = true;
     map.addLayer(this._markerGroup);
 
@@ -56,6 +57,8 @@ Edit.Rectangle = Edit.Polygon.extend({
     marker._origLatLng = latlng;
     marker._index = index;
     marker._pmTempLayer = true;
+
+    marker.on('click', this._onVertexClick, this);
 
     this._markerGroup.addLayer(marker);
 
@@ -98,7 +101,12 @@ Edit.Rectangle = Edit.Polygon.extend({
     // (Without this, it's occasionally possible for a marker to get stuck as 'snapped,' which prevents Rectangle resizing)
     draggedMarker._snapped = false;
 
-    this._fireMarkerDragStart(e);
+    const { indexPath } = L.PM.Utils.findDeepMarkerIndex(
+      this._markers,
+      draggedMarker
+    );
+
+    this._fireMarkerDragStart(e, indexPath);
   },
 
   _onMarkerDrag(e) {
@@ -116,7 +124,11 @@ Edit.Rectangle = Edit.Polygon.extend({
 
     this._adjustRectangleForMarkerMove(draggedMarker);
 
-    this._fireMarkerDrag(e);
+    const { indexPath } = L.PM.Utils.findDeepMarkerIndex(
+      this._markers,
+      draggedMarker
+    );
+    this._fireMarkerDrag(e, indexPath);
     this._fireChange(this._layer.getLatLngs(), 'Edit');
   },
 
@@ -132,7 +144,11 @@ Edit.Rectangle = Edit.Polygon.extend({
       delete m._oppositeCornerLatLng;
     });
 
-    this._fireMarkerDragEnd(e);
+    const { indexPath } = L.PM.Utils.findDeepMarkerIndex(
+      this._markers,
+      draggedMarker
+    );
+    this._fireMarkerDragEnd(e, indexPath);
 
     // fire edit event
     this._fireEdit();
@@ -150,7 +166,7 @@ Edit.Rectangle = Edit.Polygon.extend({
     const corners = L.PM.Utils._getRotatedRectangle(
       movedMarker.getLatLng(),
       movedMarker._oppositeCornerLatLng,
-      this._angle || 0,
+      this.getAngle(),
       this._map
     );
     this._layer.setLatLngs(corners);
@@ -197,12 +213,22 @@ Edit.Rectangle = Edit.Polygon.extend({
   // finds the 4 corners of the current bounding box
   // returns array of 4 LatLng objects in this order: Northwest corner, Northeast corner, Southeast corner, Southwest corner
   _findCorners() {
+    if (this._angle === undefined) {
+      this.setInitAngle(
+        calcAngle(
+          this._map,
+          this._layer.getLatLngs()[0][0],
+          this._layer.getLatLngs()[0][1]
+        ) || 0
+      );
+    }
+
     const latlngs = this._layer.getLatLngs()[0];
     return L.PM.Utils._getRotatedRectangle(
       latlngs[0],
       latlngs[2],
-      this._angle || 0,
-      this._map
+      this.getAngle(),
+      this._map || this
     );
   },
 });

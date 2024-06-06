@@ -4,11 +4,12 @@
     "firstVertex": "Clique para posicionar o primeiro vértice",
     "continueLine": "Clique para continuar desenhando",
     "finishLine": "Clique em qualquer marcador existente para finalizar",
-    "finishPoly": "Clique no primeiro ponto para fechar o polígono",
+    "finishPoly": "Clique no primeiro marcador para finalizar",
     "finishRect": "Clique para finalizar",
     "startCircle": "Clique para posicionar o centro do círculo",
-    "finishCircle": "Clique para fechar o círculo",
-    "placeCircleMarker": "Clique para posicionar o marcador circular"
+    "finishCircle": "Clique para finalizar o círculo",
+    "placeCircleMarker": "Clique para posicionar o marcador circular",
+    "placeText": "Clique para inserir texto"
   },
   "actions": {
     "finish": "Finalizar",
@@ -16,17 +17,32 @@
     "removeLastVertex": "Remover último vértice"
   },
   "buttonTitles": {
-    "drawMarkerButton": "Desenhar um marcador",
-    "drawPolyButton": "Desenhar um polígono",
-    "drawLineButton": "Desenhar uma polilinha",
-    "drawCircleButton": "Desenhar um círculo",
-    "drawRectButton": "Desenhar um retângulo",
-    "editButton": "Editar camada(s)",
-    "dragButton": "Mover camada(s)",
-    "cutButton": "Recortar camada(s)",
-    "deleteButton": "Remover camada(s)",
-    "drawCircleMarkerButton": "Marcador de círculos de desenho",
-    "snappingButton": "Marcador arrastado para outras camadas e vértices",
-    "pinningButton": "Vértices compartilhados de pinos juntos"
+    "drawMarkerButton": "Desenhar Marcador",
+    "drawPolyButton": "Desenhar Polígonos",
+    "drawLineButton": "Desenhar Linha Poligonal",
+    "drawCircleButton": "Desenhar Círculo",
+    "drawRectButton": "Desenhar Retângulo",
+    "editButton": "Editar Camadas",
+    "dragButton": "Arrastar Camadas",
+    "cutButton": "Recortar Camadas",
+    "deleteButton": "Remover Camadas",
+    "drawCircleMarkerButton": "Desenhar Marcador de Círculo",
+    "snappingButton": "Ajustar marcador arrastado a outras camadas e vértices",
+    "pinningButton": "Unir vértices compartilhados",
+    "rotateButton": "Rotacionar Camadas",
+    "drawTextButton": "Desenhar Texto",
+    "scaleButton": "Redimensionar Camadas",
+    "autoTracingButton": "Traçado Automático de Linha"
+  },
+  "measurements": {
+    "totalLength": "Comprimento",
+    "segmentLength": "Comprimento do Segmento",
+    "area": "Área",
+    "radius": "Raio",
+    "perimeter": "Perímetro",
+    "height": "Altura",
+    "width": "Largura",
+    "coordinates": "Posição",
+    "coordinatesMarker": "Marcador de Posição"
   }
 }

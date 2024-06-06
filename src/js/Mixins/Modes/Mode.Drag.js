@@ -7,7 +7,9 @@ const GlobalDragMode = {
     this._addedLayersDrag = {};
 
     layers.forEach((layer) => {
-      layer.pm.enableLayerDrag();
+      if (this._isRelevantForDrag(layer)) {
+        layer.pm.enableLayerDrag();
+      }
     });
 
     if (!this.throttledReInitDrag) {
@@ -19,8 +21,8 @@ const GlobalDragMode = {
     }
 
     // add map handler
-    this.map.on('layeradd', this.throttledReInitDrag, this);
     this.map.on('layeradd', this._layerAddedDrag, this);
+    this.map.on('layeradd', this.throttledReInitDrag, this);
 
     // toogle the button in the toolbar if this is called programatically
     this.Toolbar.toggleButton('dragMode', this.globalDragModeEnabled());
@@ -37,6 +39,7 @@ const GlobalDragMode = {
     });
 
     // remove map handler
+    this.map.off('layeradd', this._layerAddedDrag, this);
     this.map.off('layeradd', this.throttledReInitDrag, this);
 
     // toogle the button in the toolbar if this is called programatically
@@ -57,11 +60,11 @@ const GlobalDragMode = {
   reinitGlobalDragMode() {
     const layers = this._addedLayersDrag;
     this._addedLayersDrag = {};
-    for (const id in layers) {
-      const layer = layers[id];
+    if (this.globalDragModeEnabled()) {
+      for (const id in layers) {
+        const layer = layers[id];
 
-      if (this._isRelevantForDrag(layer)) {
-        if (this.globalDragModeEnabled()) {
+        if (this._isRelevantForDrag(layer)) {
           layer.pm.enableLayerDrag();
         }
       }

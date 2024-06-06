@@ -26,6 +26,8 @@ Edit.Text = Edit.extend({
     }
     this.applyOptions();
 
+    this._safeToCacheDragState = true;
+
     this._focusChange();
     this.textArea.readOnly = false;
     this.textArea.classList.remove('pm-disabled');
@@ -128,6 +130,7 @@ Edit.Text = Edit.extend({
       this.textArea.scrollWidth > 16 ? this.textArea.scrollWidth : 16;
     this.textArea.style.height = `${height}px`;
     this.textArea.style.width = `${width}px`;
+    this._layer.options.text = this.getText();
     this._fireTextChange(this.getText());
   },
 
@@ -150,12 +153,21 @@ Edit.Text = Edit.extend({
   },
 
   _focusChange(e = {}) {
+    const focusAlreadySet = this._hasFocus;
     this._hasFocus = e.type === 'focus';
-
-    if (this._hasFocus) {
-      this._applyFocus();
-    } else {
-      this._removeFocus();
+    if (!focusAlreadySet !== !this._hasFocus) {
+      if (this._hasFocus) {
+        this._applyFocus();
+        this._focusText = this.getText();
+        this._fireTextFocus();
+      } else {
+        this._removeFocus();
+        this._fireTextBlur();
+        if (this._focusText !== this.getText()) {
+          this._fireEdit();
+          this._layerEdited = true;
+        }
+      }
     }
   },
   _applyFocus() {
@@ -232,6 +244,8 @@ Edit.Text = Edit.extend({
   },
 
   _createTextMarker(enable = false) {
+    this._layer.off('add', this._createTextMarker, this);
+
     this._layer.getElement().tabIndex = -1;
 
     this.textArea.wrap = 'off';
@@ -245,7 +259,7 @@ Edit.Text = Edit.extend({
 
     this._autoResize();
 
-    if (enable) {
+    if (enable === true) {
       // enable editing for the marker
       this.enable();
       this.focus();

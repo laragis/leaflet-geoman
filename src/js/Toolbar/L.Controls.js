@@ -5,11 +5,12 @@ const PMButton = L.Control.extend({
   includes: [EventMixin],
   options: {
     position: 'topleft',
+    disableByOtherButtons: true,
   },
   // TODO: clean up variable names like _button should be _options and that domNodeVariable stuff
   initialize(options) {
     // replaced setOptions with this because classNames returned undefined 🤔
-    this._button = { ...this.options, ...options };
+    this._button = L.Util.extend({}, this.options, options);
   },
   onAdd(map) {
     this._map = map;
@@ -28,10 +29,18 @@ const PMButton = L.Control.extend({
         this.options.position
       );
     }
-    this.buttonsDomNode = this._makeButton(this._button);
-    this._container.appendChild(this.buttonsDomNode);
+    this._renderButton();
 
     return this._container;
+  },
+  _renderButton() {
+    const oldDomNode = this.buttonsDomNode;
+    this.buttonsDomNode = this._makeButton(this._button);
+    if (oldDomNode) {
+      oldDomNode.replaceWith(this.buttonsDomNode);
+    } else {
+      this._container.appendChild(this.buttonsDomNode);
+    }
   },
   onRemove() {
     this.buttonsDomNode.remove();
@@ -122,24 +131,28 @@ const PMButton = L.Control.extend({
     const actions = {
       cancel: {
         text: getTranslation('actions.cancel'),
+        title: getTranslation('actions.cancel'),
         onClick() {
           this._triggerClick();
         },
       },
       finishMode: {
         text: getTranslation('actions.finish'),
+        title: getTranslation('actions.finish'),
         onClick() {
           this._triggerClick();
         },
       },
       removeLastVertex: {
         text: getTranslation('actions.removeLastVertex'),
+        title: getTranslation('actions.removeLastVertex'),
         onClick() {
           this._map.pm.Draw[button.jsClass]._removeLastVertex();
         },
       },
       finish: {
         text: getTranslation('actions.finish'),
+        title: getTranslation('actions.finish'),
         onClick(e) {
           this._map.pm.Draw[button.jsClass]._finishShape(e);
         },
@@ -172,6 +185,10 @@ const PMButton = L.Control.extend({
       actionNode.setAttribute('role', 'button');
       actionNode.setAttribute('tabindex', '0');
       actionNode.href = '#';
+
+      if (action.title) {
+        actionNode.title = action.title;
+      }
 
       actionNode.innerHTML = action.text;
 
@@ -246,6 +263,9 @@ const PMButton = L.Control.extend({
   },
 
   _onBtnClick() {
+    if (this._button.disabled) {
+      return;
+    }
     if (this._button.disableOtherButtons) {
       this._map.pm.Toolbar.triggerClickOnToggledButtons(this);
     }
@@ -277,13 +297,9 @@ const PMButton = L.Control.extend({
     if (this._button.disabled) {
       L.DomUtil.addClass(button, className);
       button.setAttribute('aria-disabled', 'true');
-      L.DomEvent.off(button, 'click', this._triggerClick, this);
-      L.DomEvent.off(button, 'click', this._onBtnClick, this);
     } else {
       L.DomUtil.removeClass(button, className);
       button.setAttribute('aria-disabled', 'false');
-      L.DomEvent.on(button, 'click', this._triggerClick, this);
-      L.DomEvent.on(button, 'click', this._onBtnClick, this);
     }
   },
 });

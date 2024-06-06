@@ -15,6 +15,9 @@ Draw.Marker = Draw.extend({
     // change enabled state
     this._enabled = true;
 
+    // change map cursor
+    this._map.getContainer().classList.add('geoman-draw-cursor');
+
     // create a marker on click on the map
     this._map.on('click', this._createMarker, this);
 
@@ -22,7 +25,10 @@ Draw.Marker = Draw.extend({
     this._map.pm.Toolbar.toggleButton(this.toolbarButtonName, true);
 
     // this is the hintmarker on the mouse cursor
-    this._hintMarker = L.marker([0, 0], this.options.markerStyle);
+    this._hintMarker = L.marker(
+      this._map.getCenter(),
+      this.options.markerStyle
+    );
     this._setPane(this._hintMarker, 'markerPane');
     this._hintMarker._pmTempLayer = true;
     this._hintMarker.addTo(this._map);
@@ -67,6 +73,9 @@ Draw.Marker = Draw.extend({
 
     // change enabled state
     this._enabled = false;
+
+    // reset cursor
+    this._map.getContainer().classList.remove('geoman-draw-cursor');
 
     // undbind click event, don't create a marker on click anymore
     this._map.off('click', this._createMarker, this);
@@ -176,6 +185,11 @@ Draw.Marker = Draw.extend({
 
     if (!this.options.continueDrawing) {
       this.disable();
+    }
+  },
+  setStyle() {
+    if (this.options.markerStyle?.icon) {
+      this._hintMarker?.setIcon(this.options.markerStyle.icon);
     }
   },
 });

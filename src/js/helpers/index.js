@@ -1,31 +1,39 @@
 import get from 'lodash/get';
-import has from 'lodash/has';
 import translations from '../../assets/translations';
 
 export function getTranslation(path) {
-  let lang = L.PM.activeLang;
-
-  if (!has(translations, lang)) {
-    lang = 'en';
-  }
-
-  return get(translations[lang], path);
+  const lang = L.PM.activeLang;
+  // if translation is not found, fallback to english
+  return get(translations[lang], path) || get(translations.en, path) || path;
 }
 
-export function isEmptyDeep(l) {
-  // thanks for the function, Felix Heck
-  const flatten = (list) =>
-    list
-      .filter((x) => ![null, '', undefined].includes(x))
-      .reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []);
+export function hasValues(list) {
+  for (let i = 0; i < list.length; i += 1) {
+    const item = list[i];
 
-  return !flatten(l).length;
+    if (Array.isArray(item)) {
+      if (hasValues(item)) {
+        return true;
+      }
+    } else if (item !== null && item !== undefined && item !== '') {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function removeEmptyCoordRings(arr) {
   return arr.reduce((result, item) => {
     if (item.length !== 0) {
-      result.push(Array.isArray(item) ? removeEmptyCoordRings(item) : item);
+      const newItem = Array.isArray(item) ? removeEmptyCoordRings(item) : item;
+      if (Array.isArray(newItem)) {
+        if (newItem.length !== 0) {
+          result.push(newItem);
+        }
+      } else {
+        result.push(newItem);
+      }
     }
     return result;
   }, []);
@@ -35,7 +43,7 @@ export function removeEmptyCoordRings(arr) {
 function destinationVincenty(lonlat, brng, dist) {
   // rewritten to work with leaflet
   const VincentyConstants = {
-    a: 6378137,
+    a: L.CRS.Earth.R,
     b: 6356752.3142,
     f: 1 / 298.257223563,
   };
@@ -140,7 +148,7 @@ function destination(latlng, heading, distance) {
   heading = (heading + 360) % 360;
   const rad = Math.PI / 180;
   const radInv = 180 / Math.PI;
-  const R = 6378137; // approximation of Earth's radius
+  const { R } = L.CRS.Earth; // approximation of Earth's radius
   const lon1 = latlng.lng * rad;
   const lat1 = latlng.lat * rad;
   const rheading = heading * rad;
@@ -166,8 +174,7 @@ function destination(latlng, heading, distance) {
   return L.latLng([lat2 * radInv, lon2]);
 }
 /* Copied from L.GeometryUtil */
-// TODO: rename this function to calcAngle
-function angle(map, latlngA, latlngB) {
+export function calcAngle(map, latlngA, latlngB) {
   const pointA = map.latLngToContainerPoint(latlngA);
   const pointB = map.latLngToContainerPoint(latlngB);
   let angleDeg =
@@ -177,7 +184,7 @@ function angle(map, latlngA, latlngB) {
 }
 
 export function destinationOnLine(map, latlngA, latlngB, distance) {
-  const angleDeg = angle(map, latlngA, latlngB);
+  const angleDeg = calcAngle(map, latlngA, latlngB);
   return destination(latlngA, angleDeg, distance);
 }
 

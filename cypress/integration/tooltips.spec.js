@@ -42,7 +42,10 @@ describe('Shows Tooltips', () => {
 
     cy.get(mapSelector).click(290, 250);
 
+    cy.wait(500);
+
     cy.get('.leaflet-tooltip-bottom').then((el) => {
+      expect(el.length).to.eq(1);
       expect(el).to.have.text('Click to place marker');
     });
 
@@ -199,13 +202,15 @@ describe('Shows Tooltips', () => {
     cy.get('.leaflet-tooltip-bottom').should('exist');
 
     cy.get('.leaflet-tooltip-bottom').then((el) => {
-      expect(el).to.have.text('Presiona para colocar un marcador de circulo');
+      expect(el).to.have.text('Presiona para colocar un marcador de círculo');
     });
 
     cy.get(mapSelector).click(290, 250);
 
+    cy.wait(500);
+
     cy.get('.leaflet-tooltip-bottom').then((el) => {
-      expect(el).to.have.text('Presiona para colocar un marcador de circulo');
+      expect(el).to.have.text('Presiona para colocar un marcador de círculo');
     });
 
     cy.toolbarButton('circle-marker').click();
@@ -234,6 +239,38 @@ describe('Shows Tooltips', () => {
 
     cy.get('.leaflet-tooltip-bottom').then((el) => {
       expect(el).to.have.text('Click first marker to finish');
+    });
+  });
+
+  it('Add fallback to english for translations', () => {
+    cy.window().then(({ map, L }) => {
+      // we set the language to 'custom'
+      // to make sure that it has no fallback we overwrite the fallback with 'xx'
+      map.pm.setLang(
+        'custom',
+        {
+          tooltips: {
+            mytext: 'Some Text',
+          },
+        },
+        'xx'
+      );
+
+      expect(L.PM.Utils.getTranslation('tooltips.mytext')).to.eq('Some Text');
+      expect(L.PM.Utils.getTranslation('tooltips.placeMarker')).to.eq(
+        'Click to place marker'
+      );
+    });
+  });
+
+  it('shows key if no translation is available', () => {
+    cy.window().then(({ L }) => {
+      expect(L.PM.Utils.getTranslation('tooltips.placeMarker')).to.eq(
+        'Click to place marker'
+      );
+      expect(L.PM.Utils.getTranslation('tooltips.mytext')).to.eq(
+        'tooltips.mytext'
+      );
     });
   });
 });
