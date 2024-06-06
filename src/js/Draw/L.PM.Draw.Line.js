@@ -453,16 +453,18 @@ Draw.Line = Draw.extend({
     const positionMarkerText = [e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6)].join(', ');
 
     let tooltipContent = this._tooltipText
+    tooltipContent += '<div class="leaflet-pm-measurement">'
 
     if(this._shape === 'Polygon' && latlngInfo.length > 1) {
       const polygon = L.polygon(cursorLatlngs);
       const areaNumber = area(polygon.toGeoJSON(15)).toFixed(0);
 
-      tooltipContent += `</br><b>${getTranslation('measurementTooltips.area') || 'Area'}:</b> ${numberFormat(areaNumber)} m<sup>2</sup>`;
+      tooltipContent += `<b>${getTranslation('measurementTooltips.area') || 'Area'}:</b> ${numberFormat(areaNumber)} m<sup>2</sup></br>`;
     }
-    tooltipContent += `</br><b>${getTranslation('measurementTooltips.totalLength') || 'Total length'}:</b> ${totalLengthText}`;
-    tooltipContent += `</br><b>${getTranslation('measurementTooltips.segmentLength') || 'Segment length'}:</b> ${segmentLengthText}`;
-    tooltipContent += `</br><b>${getTranslation('measurementTooltips.cursorPosition') || 'Cursor position'}:</b> ${positionMarkerText}`;
+    tooltipContent += `<b>${getTranslation('measurementTooltips.totalLength') || 'Total length'}:</b> ${totalLengthText}</br>`;
+    tooltipContent += `<b>${getTranslation('measurementTooltips.segmentLength') || 'Segment length'}:</b> ${segmentLengthText}</br>`;
+    tooltipContent += `<b>${getTranslation('measurementTooltips.cursorPosition') || 'Cursor position'}:</b> ${positionMarkerText}`;
+    tooltipContent += '</div>'
 
     this._hintMarker.setTooltipContent(tooltipContent);
   },

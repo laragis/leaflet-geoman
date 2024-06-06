@@ -49,5 +49,13 @@
     "width": "Width",
     "coordinates": "Position",
     "coordinatesMarker": "Position Marker"
+  },
+  "measurementTooltips": {
+    "area": "Area",
+    "totalLength": "Total length",
+    "segmentLength": "Segment length",
+    "cursorPosition": "Cursor position",
+    "centerPostision": "Center position",
+    "radius": "Radius"
   }
 }

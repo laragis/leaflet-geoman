@@ -1,5 +1,8 @@
 import Draw from './L.PM.Draw';
 
+// @ttungbmt
+import { getTranslation } from '../helpers';
+
 Draw.Circle = Draw.CircleMarker.extend({
   initialize(map) {
     this._map = map;
@@ -40,8 +43,10 @@ Draw.Circle = Draw.CircleMarker.extend({
 
     let tooltipContent = getTranslation('tooltips.finishCircle');
 
-    tooltipContent += `</br><b>${getTranslation('measurementTooltips.centerPostision') || 'Center position'}:</b> ${positionMarkerText}`;
+    tooltipContent += '<div class="leaflet-pm-measurement">'
+    tooltipContent += `<b>${getTranslation('measurementTooltips.centerPostision') || 'Center position'}:</b> ${positionMarkerText}`;
     tooltipContent += `</br><b>${getTranslation('measurementTooltips.radius') || 'Radius'}:</b> ${radiusText}`;
+    tooltipContent += '</div>'
 
     this._hintMarker.setTooltipContent(tooltipContent);
   }
