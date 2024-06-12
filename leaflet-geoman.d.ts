@@ -580,6 +580,7 @@ declare module 'leaflet' {
       | 'sv'
       | 'tr'
       | 'ua'
+      | 'vi' // @ttungbmt
       | 'zh'
       | 'zh_tw';
 
