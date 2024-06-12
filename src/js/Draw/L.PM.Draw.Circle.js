@@ -43,9 +43,9 @@ Draw.Circle = Draw.CircleMarker.extend({
 
     let tooltipContent = getTranslation('tooltips.finishCircle');
 
-    tooltipContent += '<div class="leaflet-pm-measurement">'
-    tooltipContent += `<b>${getTranslation('measurementTooltips.centerPostision') || 'Center position'}:</b> ${positionMarkerText}`;
-    tooltipContent += `</br><b>${getTranslation('measurementTooltips.radius') || 'Radius'}:</b> ${radiusText}`;
+    tooltipContent += '<p class="leaflet-geoman-measurements">'
+    tooltipContent += `<b>${getTranslation('measurementTooltips.centerPostision') || 'Center position'}:</b> ${positionMarkerText}</br>`;
+    tooltipContent += `<b>${getTranslation('measurementTooltips.radius') || 'Radius'}:</b> ${radiusText}`;
     tooltipContent += '</div>'
 
     this._hintMarker.setTooltipContent(tooltipContent);

@@ -1,6 +1,11 @@
 /* BEGIN - @ttungbmt */
-.leaflet-pm-measurement {
-  min-width: 280px;
+.leaflet-geoman-measurements {
+  font-family: Arial, Poppins, sans-serif;
+  font-size: 14px;
+}
+
+.leaflet-geoman-measurements strong {
+  font-weight: 600;
 }
 /* END - @ttungbmt */
 

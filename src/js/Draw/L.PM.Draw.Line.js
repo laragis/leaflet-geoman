@@ -1,13 +1,14 @@
 import kinks from '@turf/kinks';
 import Draw from './L.PM.Draw';
+import { getTranslation } from '../helpers';
+
 // @ttungbmt
 import distance from '@turf/distance';
 import area from '@turf/area'; 
 import map from 'lodash/map'; 
 import sum from 'lodash/sum'; 
 import transform from 'lodash/transform';
-
-import { getTranslation } from '../helpers';
+import { formatArea, formatDistance } from '../helpers/formatHelper';
 
 Draw.Line = Draw.extend({
   initialize(map) {
@@ -439,32 +440,29 @@ Draw.Line = Draw.extend({
     const lastPoint = L.marker(latlngInfo.slice(-1).shift()?.latlng);
     const movingPoint = L.marker(e.latlng);
 
-    const numberFormat = (number) => new Intl.NumberFormat('en-EN').format(number);
-    const lengthFormat = (number) => (number > 1000) ? (number/1000).toFixed(2) + ' km' : number.toFixed(0) + ' m';
-
     let segmentLength = distance(lastPoint.toGeoJSON(15), movingPoint.toGeoJSON(15), {units: 'meters'});
     let totalLength = sum(transform(cursorLatlngs, (result, value, key) => {
       if((cursorLatlngs.length - 1) === key) return;
       result[key] = distance(L.marker(value).toGeoJSON(15), L.marker(cursorLatlngs[key+1]).toGeoJSON(15), {units: 'meters'})
     }, []))
 
-    const totalLengthText = lengthFormat(totalLength);
-    const segmentLengthText = lengthFormat(segmentLength);
+    const totalLengthText = formatDistance(totalLength);
+    const segmentLengthText = formatDistance(segmentLength);
     const positionMarkerText = [e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6)].join(', ');
 
     let tooltipContent = this._tooltipText
-    tooltipContent += '<div class="leaflet-pm-measurement">'
+    tooltipContent += '<p class="leaflet-geoman-measurements">'
 
     if(this._shape === 'Polygon' && latlngInfo.length > 1) {
       const polygon = L.polygon(cursorLatlngs);
-      const areaNumber = area(polygon.toGeoJSON(15)).toFixed(0);
+      const areaNumber = area(polygon.toGeoJSON(15));
 
-      tooltipContent += `<b>${getTranslation('measurementTooltips.area') || 'Area'}:</b> ${numberFormat(areaNumber)} m<sup>2</sup></br>`;
+      tooltipContent += `<b>${getTranslation('measurementTooltips.area') || 'Area'}:</b> ${formatArea(areaNumber)}</br>`;
     }
     tooltipContent += `<b>${getTranslation('measurementTooltips.totalLength') || 'Total length'}:</b> ${totalLengthText}</br>`;
     tooltipContent += `<b>${getTranslation('measurementTooltips.segmentLength') || 'Segment length'}:</b> ${segmentLengthText}</br>`;
     tooltipContent += `<b>${getTranslation('measurementTooltips.cursorPosition') || 'Cursor position'}:</b> ${positionMarkerText}`;
-    tooltipContent += '</div>'
+    tooltipContent += '</p>'
 
     this._hintMarker.setTooltipContent(tooltipContent);
   },

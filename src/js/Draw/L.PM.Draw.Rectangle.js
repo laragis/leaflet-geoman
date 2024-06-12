@@ -1,6 +1,15 @@
 import Draw from './L.PM.Draw';
 import { fixLatOffset, getTranslation } from '../helpers';
 
+
+// @ttungbmt
+import { lineString } from "@turf/helpers";
+import { getCoords } from "@turf/invariant";
+import area from "@turf/area";
+import length from "@turf/length";
+import distance from "@turf/distance";
+import { formatArea, formatDistance } from '../helpers/formatHelper';
+
 Draw.Rectangle = Draw.extend({
   initialize(map) {
     this._map = map;
@@ -14,6 +23,9 @@ Draw.Rectangle = Draw.extend({
 
     // enable draw mode
     this._enabled = true;
+
+    // @ttungbmt
+    this._isFirstClicked = false
 
     // create a new layergroup
     this._layerGroup = new L.FeatureGroup();
@@ -152,6 +164,9 @@ Draw.Rectangle = Draw.extend({
     }
   },
   _placeStartingMarkers(e) {
+    // @ttungbmt
+    this._isFirstClicked = true
+
     // assign the coordinate of the click to the hintMarker, that's necessary for
     // mobile where the marker can't follow a cursor
     if (!this._hintMarker._snapped) {
@@ -209,6 +224,9 @@ Draw.Rectangle = Draw.extend({
         ? this._layer.getLatLngs()
         : [this._hintMarker.getLatLng()];
     this._fireChange(latlngs, 'Draw');
+
+    // @ttungbmt
+    this._showMeasurement(e);
   },
   _syncRectangleSize() {
     const A = fixLatOffset(this._startMarker.getLatLng(), this._map);
@@ -313,4 +331,37 @@ Draw.Rectangle = Draw.extend({
   setStyle() {
     this._layer?.setStyle(this.options.pathOptions);
   },
+  // @ttungbmt
+  _showMeasurement(e){
+    let tooltipContent = getTranslation('tooltips.firstVertex');
+
+    if(this._isFirstClicked) {
+      tooltipContent = getTranslation('tooltips.finishRect');
+
+      const geojson = this._layer.toGeoJSON();
+      const coords = getCoords(geojson)[0];
+      const rec_area = area(geojson).toFixed(2);
+      const perimeter = (length(lineString(coords))*1000).toFixed(2)
+
+      // Extract the coordinates
+      const bottomLeft = coords[0];
+      const topLeft = coords[1];
+      const topRight = coords[2];
+      const bottomRight = coords[3];
+
+      const width = (distance(bottomLeft, topLeft)*1000).toFixed(2);
+      const height = (distance(bottomLeft, bottomRight)*1000).toFixed(2);
+
+      tooltipContent += `<p class="leaflet-geoman-measurements">`;
+      tooltipContent += `<strong>Area:</strong> ${formatArea(rec_area)}</br>`;
+      tooltipContent += `<strong>Perimeter:</strong> ${formatDistance(perimeter)}</br>`;
+      tooltipContent += `<strong>Width:</strong> ${formatDistance(width)}</br>`;
+      tooltipContent += `<strong>Height:</strong> ${formatDistance(height)}</br>`;
+      tooltipContent += `<strong>Position Marker:</strong> ${e.latlng.lat.toFixed(6)},${e.latlng.lng.toFixed(6)}</br>`;
+      tooltipContent += `</p>`
+    }
+
+
+    this._hintMarker.setTooltipContent(tooltipContent);
+  }
 });

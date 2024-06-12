@@ -16,7 +16,8 @@
   "actions": {
     "finish": "Finish",
     "cancel": "Cancel",
-    "removeLastVertex": "Remove Last Vertex"
+    "removeLastVertex": "Remove Last Vertex",
+    "clearAll": "Clear All"
   },
   "buttonTitles": {
     "drawMarkerButton": "Draw Marker",

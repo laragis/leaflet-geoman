@@ -161,7 +161,7 @@ const PMButton = L.Control.extend({
       clearAll: {
         text: getTranslation('actions.clearAll') || 'Clear All',
         onClick(e) {
-          this._map.pm.getGeomanLayers().map(layer => this._map.removeLayer(layer))
+          this._map.pm.getGeomanDrawLayers().map(layer => this._map.removeLayer(layer))
           this._triggerClick();
         },
       }

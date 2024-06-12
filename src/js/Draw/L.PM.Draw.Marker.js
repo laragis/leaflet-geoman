@@ -135,6 +135,9 @@ Draw.Marker = Draw.extend({
     }
 
     this._fireChange(this._hintMarker.getLatLng(), 'Draw');
+
+    // @ttungbmt
+    this._showMeasurement(e);
   },
   _createMarker(e) {
     if (!e.latlng) {
@@ -192,4 +195,12 @@ Draw.Marker = Draw.extend({
       this._hintMarker?.setIcon(this.options.markerStyle.icon);
     }
   },
+  // @ttungbmt
+  _showMeasurement(e){
+    let tooltipContent = getTranslation('tooltips.placeMarker');
+
+    tooltipContent += `<p class="leaflet-geoman-measurements"><strong>Position:</strong> ${e.latlng.lat.toFixed(6)},${e.latlng.lng.toFixed(6)}</p>`
+
+    this._hintMarker.setTooltipContent(tooltipContent);
+  }
 });
